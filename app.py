@@ -19,8 +19,8 @@ from tkinter import messagebox, ttk
 
 ESTOQUE_ALERTA_EMAIL = 10
 
-EMAIL_REMETENTE = "sistemadeestoque67@gmail.com"
-EMAIL_SENHA = "bout auuq ydro zzdx"
+EMAIL_REMETENTE = "" # EMAIL
+EMAIL_SENHA = "" # SENHA
 SMTP_SERVIDOR = "smtp.gmail.com"
 SMTP_PORTA = 587
 
@@ -54,8 +54,6 @@ def verificar_e_alertar(gestao, produto, email_destino):
     if 0 < quantidade_atual <= ESTOQUE_ALERTA_EMAIL:
         enviar_alerta_estoque(email_destino, produto, quantidade_atual)
 
-
-# ------------------- BACKEND (sem alteracoes de logica) -------------------
 class Gestao:
     def __init__(self, banco):
         self.conn = sqlite3.connect(banco)
