@@ -1,7 +1,7 @@
 """
-Sistema de Gestao de Estoque - Interface Grafica
-CustomTkinter - Paleta Azul/Preto
-Backend: SQLite (Gestao, Usuarios, Vendas) + alerta por e-mail + relatorio Excel
+Frontend: Sistema de Gestao de Estoque com CustomTkinter
+Backend: SQLite (Gestao, Usuarios, Vendas)
+Updates: alerta por e-mail e relatorio Excel
 """
 
 import sqlite3
