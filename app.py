@@ -1,7 +1,8 @@
 """
-Frontend: Sistema de Gestao de Estoque com CustomTkinter
+Sistema de Gestao de Estoque com 
+Frontend: CustomTkinter
 Backend: SQLite (Gestao, Usuarios, Vendas)
-Updates: alerta por e-mail e relatorio Excel
+Updates: Alerta por e-mail e relatorio Excel
 """
 
 import sqlite3
@@ -19,12 +20,12 @@ from tkinter import messagebox, ttk
 
 ESTOQUE_ALERTA_EMAIL = 10
 
-EMAIL_REMETENTE = "" # EMAIL
-EMAIL_SENHA = "" # SENHA
+EMAIL_REMETENTE = "" #EMAIL
+EMAIL_SENHA = "" #SENHA DE APP
 SMTP_SERVIDOR = "smtp.gmail.com"
 SMTP_PORTA = 587
 
-
+#Alerta Email
 def enviar_alerta_estoque(destinatario, produto, quantidade):
     assunto = f"Alerta de estoque baixo: {produto}"
     corpo = (
@@ -338,7 +339,7 @@ class Vendas:
         return cursor.fetchall()
 
 
-# ------------------- PALETA -------------------
+#Cores:
 COR_FUNDO = "#0d1117"
 COR_SIDEBAR = "#111827"
 COR_CARD = "#161b22"
@@ -366,7 +367,7 @@ def estilizar_treeview():
     estilo.map("Treeview", background=[("selected", COR_AZUL_PRIMARIO)])
 
 
-# ------------------- TELA DE LOGIN -------------------
+#Login e Cadastro de Usuario
 class TelaLogin(ctk.CTkToplevel if False else ctk.CTk):
     def __init__(self, usuarios: Usuarios, ao_logar):
         super().__init__()
@@ -472,7 +473,7 @@ class JanelaCadastroUsuario(ctk.CTkToplevel):
             messagebox.showerror("Erro", "Esse nome de usuário já existe.")
 
 
-# ------------------- APLICACAO PRINCIPAL -------------------
+#Principal
 class App(ctk.CTk):
     def __init__(self, gestao: Gestao, vendas: Vendas, usuario_logado):
         super().__init__()
@@ -496,7 +497,7 @@ class App(ctk.CTk):
         self.frame_estoque.tkraise()
         self.atualizar_tabela_estoque()
 
-    # ---------- SIDEBAR ----------
+    #Barra lateral
     def _criar_sidebar(self):
         sidebar = ctk.CTkFrame(self, width=230, corner_radius=0, fg_color=COR_SIDEBAR)
         sidebar.grid(row=0, column=0, sticky="nswe")
@@ -521,7 +522,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(sidebar, text="v1.0 • CustomTkinter", text_color=COR_TEXTO_SECUNDARIO,
                      font=ctk.CTkFont(size=11)).pack(side="bottom", pady=20)
 
-    # ---------- AREA PRINCIPAL ----------
+    #Area principal
     def _criar_area_principal(self):
         container = ctk.CTkFrame(self, fg_color=COR_FUNDO)
         container.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
@@ -543,7 +544,7 @@ class App(ctk.CTk):
                      text_color=COR_TEXTO).pack(side="left")
         return header
 
-    # ---------- TELA: ESTOQUE ----------
+    #Estoque
     def _criar_frame_estoque(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -630,7 +631,7 @@ class App(ctk.CTk):
             self.tabela_estoque.insert("", "end", values=(id_p, produto, qtd, f"R$ {preco:.2f}"))
         self._atualizar_combos_produtos()
 
-    # ---------- TELA: VENDAS ----------
+    #Vendas
     def _criar_frame_vendas(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -719,7 +720,7 @@ class App(ctk.CTk):
         if hasattr(self, "combo_produto_venda"):
             self.combo_produto_venda.configure(values=produtos)
 
-    # ---------- TELA: FORNECEDORES ----------
+    #Fornecedores
     def _criar_frame_fornecedores(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -782,7 +783,7 @@ class App(ctk.CTk):
         for id_f, nome, celular, produto in self.gestao.listar_fornecedores():
             self.tabela_fornecedores.insert("", "end", values=(id_f, nome, celular, produto))
 
-    # ---------- TELA: RELATORIO ----------
+    #Relatorio
     def _criar_frame_relatorio(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -815,7 +816,7 @@ class App(ctk.CTk):
             messagebox.showwarning("Estoque vazio", "Não há produtos em estoque para gerar o relatório.")
         self.atualizar_valor_total()
 
-    # ---------- NAVEGACAO ----------
+    #Navegacao
     def mostrar_estoque(self):
         self.atualizar_tabela_estoque()
         self.frame_estoque.tkraise()
@@ -834,7 +835,7 @@ class App(ctk.CTk):
         self.frame_relatorio.tkraise()
 
 
-# ------------------- INICIALIZACAO -------------------
+#Inicializacao
 def iniciar_app_principal(usuario_logado):
     gestao = Gestao("estoque.db")
     vendas = Vendas("estoque.db", gestao)
