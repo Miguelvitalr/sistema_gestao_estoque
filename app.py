@@ -1,7 +1,8 @@
 """
-Frontend: Sistema de Gestao de Estoque com CustomTkinter
+Sistema de Gestao de Estoque com 
+Frontend: CustomTkinter
 Backend: SQLite (Gestao, Usuarios, Vendas)
-Updates: alerta por e-mail e relatorio Excel
+Updates: Alerta por e-mail e relatorio Excel
 """
 
 import sqlite3
@@ -19,12 +20,12 @@ from tkinter import messagebox, ttk
 
 ESTOQUE_ALERTA_EMAIL = 10
 
-EMAIL_REMETENTE = "" # EMAIL
-EMAIL_SENHA = "" # SENHA
+EMAIL_REMETENTE = "" #EMAIL
+EMAIL_SENHA = "" #SENHA DE APP
 SMTP_SERVIDOR = "smtp.gmail.com"
 SMTP_PORTA = 587
 
-
+#Alerta Email
 def enviar_alerta_estoque(destinatario, produto, quantidade):
     assunto = f"Alerta de estoque baixo: {produto}"
     corpo = (
@@ -33,13 +34,13 @@ def enviar_alerta_estoque(destinatario, produto, quantidade):
         f"Sistema de Gestao de Estoque"
     )
 
-    msg = MIMEText(corpo)
+    msg = MIMEText(corpo) #Monta conteudo do email
     msg["Subject"] = assunto
     msg["From"] = EMAIL_REMETENTE
     msg["To"] = destinatario
 
     try:
-        servidor = smtplib.SMTP(SMTP_SERVIDOR, SMTP_PORTA)
+        servidor = smtplib.SMTP(SMTP_SERVIDOR, SMTP_PORTA) #Fazer envio do email
         servidor.starttls()
         servidor.login(EMAIL_REMETENTE, EMAIL_SENHA)
         servidor.sendmail(EMAIL_REMETENTE, destinatario, msg.as_string())
@@ -50,18 +51,18 @@ def enviar_alerta_estoque(destinatario, produto, quantidade):
 
 
 def verificar_e_alertar(gestao, produto, email_destino):
-    quantidade_atual = gestao.consultar_estoque(produto)
+    quantidade_atual = gestao.consultar_estoque(produto) #Verifica quantidade atual do produto no estoque
     if 0 < quantidade_atual <= ESTOQUE_ALERTA_EMAIL:
         enviar_alerta_estoque(email_destino, produto, quantidade_atual)
 
-class Gestao:
-    def __init__(self, banco):
-        self.conn = sqlite3.connect(banco)
-        self.criar_tabela_estoque()
-        self.criar_tabela_fornecedores()
+class Gestao: # Classe para gerenciar a lógica de negócio do sistema de estoque
+    def __init__(self, banco): 
+        self.conn = sqlite3.connect(banco) #abri conexão com o banco de dados SQLite
+        self.criar_tabela_estoque() #Cria a tabela de estoque se não existir
+        self.criar_tabela_fornecedores() #Cria a tabela de fornecedores se não existir
 
     def criar_tabela_estoque(self):
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor() #Cria um cursor para executar comandos SQL
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS estoque (
         id INTEGER PRIMARY KEY,
@@ -70,7 +71,7 @@ class Gestao:
         preco REAL
         )
         ''')
-        self.conn.commit()
+        self.conn.commit() #Salva as alterações no banco de dados
 
     def criar_tabela_fornecedores(self):
         cursor = self.conn.cursor()
@@ -87,28 +88,28 @@ class Gestao:
     def adicionar_produto(self, produto, quantidade, preco=None):
         cursor = self.conn.cursor()
         cursor.execute("SELECT quantidade, preco FROM estoque WHERE produto=?", (produto,))
-        resultado = cursor.fetchone()
-        if resultado:
+        resultado = cursor.fetchone() #se o produto já existe no estoque, soma a quantidade e atualiza; se não existe, cria um novo registro.
+        if resultado: # Se o produto já existe
             nova_quantidade = resultado[0] + quantidade
-            preco_final = preco if preco is not None else resultado[1]
+            preco_final = preco if preco is not None else resultado[1] #Mantem o preco atual se não for fornecido um novo
             cursor.execute("UPDATE estoque SET quantidade=?, preco=? WHERE produto=?",
                             (nova_quantidade, preco_final, produto))
-        else:
-            if preco is None:
+        else: # Se o produto não existe
+            if preco is None: 
                 preco = 0
-            nova_quantidade = quantidade
+            nova_quantidade = quantidade 
             cursor.execute("INSERT INTO estoque (produto, quantidade, preco) VALUES (?,?,?)",
-                            (produto, quantidade, preco))
-        self.conn.commit()
-        return nova_quantidade
+                            (produto, quantidade, preco)) #Insere o novo produto no estoque
+        self.conn.commit() #Salva as alterações no banco de dados
+        return nova_quantidade #Retorna a nova quantidade do produto
 
     def consultar_produto_por_id(self, produto_id):
         cursor = self.conn.cursor()
         cursor.execute("SELECT id, produto, quantidade, preco FROM estoque WHERE id=?", (produto_id,))
-        return cursor.fetchone()
+        return cursor.fetchone() #Retorna uma tupla com os dados do produto (id, nome, quantidade, preco) ou None se não encontrado
 
     def adicionar_produto_por_id(self, produto_id, quantidade, preco=None):
-        produto_existente = self.consultar_produto_por_id(produto_id)
+        produto_existente = self.consultar_produto_por_id(produto_id) #Verifica se o produto existe no estoque pelo ID
         if not produto_existente:
             return False, None
 
@@ -123,86 +124,88 @@ class Gestao:
         return True, produto
 
     def executar_venda(self, produto, quantidade):
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor() #conn = conection, cursor = ponteiro para executar comandos SQL
         cursor.execute("SELECT quantidade FROM estoque WHERE produto=?", (produto,))
-        resultado = cursor.fetchone()
-        if resultado:
-            estoque_atual = resultado[0]
-            if estoque_atual >= quantidade:
-                nova_quantidade = estoque_atual - quantidade
+        resultado = cursor.fetchone() #Retorna a quantidade atual do produto no estoque
+        if resultado: # Se o produto existe no estoque
+            estoque_atual = resultado[0] #Verifica se a quantidade em estoque é suficiente para a venda 
+            if estoque_atual >= quantidade: 
+                nova_quantidade = estoque_atual - quantidade #Realiza a venda
                 cursor.execute("UPDATE estoque SET quantidade=? WHERE produto=?",
-                                (nova_quantidade, produto))
-                self.conn.commit()
-                return True
-            return False
-        return False
+                                (nova_quantidade, produto)) #atualiza a quantidade do produto no estoque
+                self.conn.commit() #salva as alterações no banco de dados
+                return True #Retorna True indicando que a venda foi realizada com sucesso
+            return False #Retorna False indicando que não há estoque suficiente para a venda
+        return False #Retorna False indicando que o produto não foi encontrado no estoque
 
     def remover_produto(self, produto):
         cursor = self.conn.cursor()
         cursor.execute("SELECT produto FROM estoque WHERE produto=?", (produto,))
-        if not cursor.fetchone():
+        if not cursor.fetchone(): # Se o produto não existe no estoque, retorna False
             return False
-        cursor.execute("DELETE FROM estoque WHERE produto=?", (produto,))
-        self.conn.commit()
+        cursor.execute("DELETE FROM estoque WHERE produto=?", (produto,)) #Remove o produto do estoque
+        self.conn.commit() #Salva as alterações no banco de dados
         return True
 
     def consultar_estoque(self, produto):
         cursor = self.conn.cursor()
         cursor.execute("SELECT quantidade FROM estoque WHERE produto=?", (produto,))
-        resultado = cursor.fetchone()
-        return resultado[0] if resultado else 0
+        resultado = cursor.fetchone() #Retorna a quantidade atual do produto no estoque ou 0 se não encontrado
+        return resultado[0] if resultado else 0 # Retorna 0 se o produto não for encontrado
 
     def consultar_preco(self, produto):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT preco FROM estoque WHERE produto=?", (produto,))
-        resultado = cursor.fetchone()
-        return resultado[0] if resultado else None
+        cursor.execute("SELECT preco FROM estoque WHERE produto=?", (produto,)) #Retorna o preço atual do produto no estoque ou None se não encontrado
+        #fetchone retorna uma tupla com o resultado da consulta, ou None se não houver resultado
+        resultado = cursor.fetchone() # Recupera o resultado da consulta
+        return resultado[0] if resultado else None # Retorna None se o produto não for encontrado
 
     def lista_estoque(self):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT produto, quantidade, preco FROM estoque WHERE quantidade > 0")
-        return cursor.fetchall()
+        cursor.execute("SELECT produto, quantidade, preco FROM estoque WHERE quantidade > 0") #Seleciona os produtos em estoque com quantidade maior que 0
+        return cursor.fetchall() #Retorna uma lista de tuplas com os produtos em estoque (produto, quantidade, preco) que possuem quantidade maior que 0
 
     def lista_estoque_completa(self):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT id, produto, quantidade, preco FROM estoque")
-        return cursor.fetchall()
+        cursor.execute("SELECT id, produto, quantidade, preco FROM estoque") #Seleciona todos os produtos no estoque, incluindo aqueles com quantidade igual a 0
+        #fetchall retorna uma lista de tuplas com todos os produtos no estoque (id, produto, quantidade, preco), incluindo aqueles com quantidade igual a 0
+        return cursor.fetchall() #Retorna uma lista de tuplas com todos os produtos no estoque (id, produto, quantidade, preco), incluindo aqueles com quantidade igual a 0
 
     def valor_total_estoque(self):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT SUM(quantidade * preco) FROM estoque")
-        resultado = cursor.fetchone()
-        return resultado[0] if resultado[0] is not None else 0
+        cursor.execute("SELECT SUM(quantidade * preco) FROM estoque") #Calcula o valor total do estoque (quantidade * preco) de todos os produtos no estoque
+        resultado = cursor.fetchone() #Retorna o valor total do estoque (quantidade * preco) ou 0 se não houver produtos no estoque
+        return resultado[0] if resultado[0] is not None else 0 # Retorna 0 se não houver produtos no estoque
 
-    def gerar_grafico_estoque(self, caminho_saida="relatorio_estoque.xlsx"):
-        produtos = self.lista_estoque()
+    def gerar_grafico_estoque(self, caminho_saida="relatorio_estoque.xlsx"): #Gera um relatório em Excel com gráfico de barras mostrando a quantidade em estoque por produto
+        produtos = self.lista_estoque() #pega a lista de produtos em estoque com quantidade maior que 0
         if not produtos:
-            return False
+            return False #Retorna False se não houver produtos em estoque
 
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Estoque"
+        wb = openpyxl.Workbook() #Cria um novo arquivo Excel
+        ws = wb.active #Cria uma nova planilha no arquivo Excel
+        ws.title = "Estoque" 
         ws.append(["Produto", "Quantidade", "Preco"])
-        for produto, quantidade, preco in produtos:
+        for produto, quantidade, preco in produtos: #Adiciona os produtos em estoque com quantidade maior que 0 na planilha do Excel
             ws.append([produto, quantidade, preco])
 
-        ultima_linha = ws.max_row
+        ultima_linha = ws.max_row #Pega a última linha da planilha do Excel para definir o intervalo de dados do gráfico
 
-        grafico = BarChart()
-        grafico.type = "col"
+        grafico = BarChart() #Cria um gráfico de barras no Excel
+        grafico.type = "col" 
         grafico.title = "Quantidade em Estoque por Produto"
         grafico.x_axis.title = "Produto"
         grafico.y_axis.title = "Quantidade"
         grafico.width = 20
         grafico.height = 12
 
-        dados_ref = Reference(ws, min_col=2, min_row=1, max_row=ultima_linha)
-        categorias_ref = Reference(ws, min_col=1, min_row=2, max_row=ultima_linha)
-        grafico.add_data(dados_ref, titles_from_data=True)
-        grafico.set_categories(categorias_ref)
-        ws.add_chart(grafico, "E2")
+        dados_ref = Reference(ws, min_col=2, min_row=1, max_row=ultima_linha) #Cria uma referência para os dados do gráfico (quantidade) na planilha do Excel
+        categorias_ref = Reference(ws, min_col=1, min_row=2, max_row=ultima_linha) #Cria uma referência para as categorias do gráfico (produto) na planilha do Excel
+        grafico.add_data(dados_ref, titles_from_data=True) #Adiciona os dados do gráfico (quantidade) na planilha do Excel
+        grafico.set_categories(categorias_ref) #Adiciona as categorias do gráfico (produto) na planilha do Excel
+        ws.add_chart(grafico, "E2") #Adiciona o gráfico na planilha do Excel na posição E2
 
-        wb.save(caminho_saida)
+        wb.save(caminho_saida) #Salva o arquivo Excel com o relatório de estoque e gráfico de barras
         return True
 
     def adicionar_fornecedor(self, nome, celular, produto):
@@ -216,23 +219,23 @@ class Gestao:
     def listar_fornecedores(self):
         cursor = self.conn.cursor()
         cursor.execute("SELECT id, nome, celular, produto FROM fornecedores")
-        return cursor.fetchall()
+        return cursor.fetchall() #Retorna uma lista de tuplas com os fornecedores cadastrados (id, nome, celular, produto)
 
     def remover_fornecedor(self, fornecedor_id):
         cursor = self.conn.cursor()
         cursor.execute("SELECT nome FROM fornecedores WHERE id=?", (fornecedor_id,))
-        resultado = cursor.fetchone()
+        resultado = cursor.fetchone() #Verifica se o fornecedor existe no banco de dados antes de tentar removê-lo. Se não existir, retorna None. Se existir, remove o fornecedor do banco de dados e retorna o nome do fornecedor removido.
         if not resultado:
             return None
         cursor.execute("DELETE FROM fornecedores WHERE id=?", (fornecedor_id,))
         self.conn.commit()
-        return resultado[0]
+        return resultado[0] #Retorna o nome do fornecedor removido do banco de dados
 
 
 class Usuarios:
     def __init__(self, banco):
-        self.conn = sqlite3.connect(banco)
-        self.criar_tabela_usuarios()
+        self.conn = sqlite3.connect(banco) #Abre conexão com o banco de dados SQLite
+        self.criar_tabela_usuarios() #Cria a tabela de usuários se não existir
 
     def criar_tabela_usuarios(self):
         cursor = self.conn.cursor()
@@ -247,31 +250,31 @@ class Usuarios:
         self.conn.commit()
 
     def _gerar_hash(self, senha):
-        return hashlib.sha256(senha.encode()).hexdigest()
+        return hashlib.sha256(senha.encode()).hexdigest() #Gera um hash SHA-256 da senha fornecida para armazená-la de forma segura no banco de dados
 
     def cadastrar_usuario(self, username, senha, email):
         cursor = self.conn.cursor()
         cursor.execute("SELECT username FROM usuarios WHERE username=?", (username,))
-        if cursor.fetchone():
-            return False
-        senha_hash = self._gerar_hash(senha)
+        if cursor.fetchone(): #Verifica se o nome de usuário já existe no banco de dados. 
+            return False #Se o nome de usuário já existir, retorna False indicando que o cadastro não pode ser realizado.
+        senha_hash = self._gerar_hash(senha) #Gera o hash da senha fornecida para armazená-la de forma segura no banco de dados
         cursor.execute(
             "INSERT INTO usuarios (username, senha_hash, email) VALUES (?,?,?)",
             (username, senha_hash, email)
-        )
+        ) #Insere o novo usuário no banco de dados com o nome de usuário, hash da senha e e-mail fornecidos
         self.conn.commit()
         return True
 
     def login(self, username, senha):
         cursor = self.conn.cursor()
-        senha_hash = self._gerar_hash(senha)
+        senha_hash = self._gerar_hash(senha) #Gera o hash da senha fornecida para comparar com o hash armazenado no banco de dados
         cursor.execute(
             "SELECT id, username, email FROM usuarios WHERE username=? AND senha_hash=?",
             (username, senha_hash)
         )
-        resultado = cursor.fetchone()
+        resultado = cursor.fetchone() #Verifica se o nome de usuário e a senha fornecidos correspondem a um usuário existente no banco de dados.
         if resultado:
-            id_usuario, username, email = resultado
+            id_usuario, username, email = resultado #Se o login for bem-sucedido, retorna um dicionário com o ID do usuário, nome de usuário e e-mail. Caso contrário, retorna None.
             return {"id": id_usuario, "username": username, "email": email}
         return None
 
@@ -279,7 +282,7 @@ class Usuarios:
 class Vendas:
     def __init__(self, banco, gestao):
         self.conn = sqlite3.connect(banco)
-        self.gestao = gestao
+        self.gestao = gestao #Instância da classe GestaoEstoque
         self.criar_tabela_vendas()
 
     def criar_tabela_vendas(self):
@@ -305,7 +308,7 @@ class Vendas:
         if estoque_atual < quantidade:
             return False, f"Estoque insuficiente (disponivel: {estoque_atual})."
 
-        sucesso = self.gestao.executar_venda(produto, quantidade)
+        sucesso = self.gestao.executar_venda(produto, quantidade) #Tenta executar a venda, atualizando o estoque. Se não for possível, retorna False e uma mensagem de erro.
         if not sucesso:
             return False, "Falha ao executar a venda."
 
@@ -323,7 +326,7 @@ class Vendas:
     def remover_venda(self, venda_id):
         cursor = self.conn.cursor()
         cursor.execute("SELECT produto, quantidade FROM vendas WHERE id=?", (venda_id,))
-        resultado = cursor.fetchone()
+        resultado = cursor.fetchone() #Verifica se a venda existe no banco de dados. Se não existir, retorna False. Se existir, adiciona a quantidade vendida de volta ao estoque e remove a venda do banco de dados.
         if not resultado:
             return False
         produto, quantidade = resultado
@@ -335,10 +338,10 @@ class Vendas:
     def listar_vendas(self):
         cursor = self.conn.cursor()
         cursor.execute("SELECT id, produto, quantidade, preco_unitario, valor_total, data FROM vendas")
-        return cursor.fetchall()
+        return cursor.fetchall() #Retorna uma lista de tuplas com as vendas registradas (id, produto, quantidade, preco_unitario, valor_total, data)
 
 
-# ------------------- PALETA -------------------
+#Cores:
 COR_FUNDO = "#0d1117"
 COR_SIDEBAR = "#111827"
 COR_CARD = "#161b22"
@@ -366,7 +369,7 @@ def estilizar_treeview():
     estilo.map("Treeview", background=[("selected", COR_AZUL_PRIMARIO)])
 
 
-# ------------------- TELA DE LOGIN -------------------
+#Login e Cadastro de Usuario
 class TelaLogin(ctk.CTkToplevel if False else ctk.CTk):
     def __init__(self, usuarios: Usuarios, ao_logar):
         super().__init__()
@@ -472,7 +475,7 @@ class JanelaCadastroUsuario(ctk.CTkToplevel):
             messagebox.showerror("Erro", "Esse nome de usuário já existe.")
 
 
-# ------------------- APLICACAO PRINCIPAL -------------------
+#Principal
 class App(ctk.CTk):
     def __init__(self, gestao: Gestao, vendas: Vendas, usuario_logado):
         super().__init__()
@@ -496,7 +499,7 @@ class App(ctk.CTk):
         self.frame_estoque.tkraise()
         self.atualizar_tabela_estoque()
 
-    # ---------- SIDEBAR ----------
+    #Barra lateral
     def _criar_sidebar(self):
         sidebar = ctk.CTkFrame(self, width=230, corner_radius=0, fg_color=COR_SIDEBAR)
         sidebar.grid(row=0, column=0, sticky="nswe")
@@ -521,7 +524,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(sidebar, text="v1.0 • CustomTkinter", text_color=COR_TEXTO_SECUNDARIO,
                      font=ctk.CTkFont(size=11)).pack(side="bottom", pady=20)
 
-    # ---------- AREA PRINCIPAL ----------
+    #Area principal
     def _criar_area_principal(self):
         container = ctk.CTkFrame(self, fg_color=COR_FUNDO)
         container.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
@@ -543,7 +546,7 @@ class App(ctk.CTk):
                      text_color=COR_TEXTO).pack(side="left")
         return header
 
-    # ---------- TELA: ESTOQUE ----------
+    #Estoque
     def _criar_frame_estoque(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -630,7 +633,7 @@ class App(ctk.CTk):
             self.tabela_estoque.insert("", "end", values=(id_p, produto, qtd, f"R$ {preco:.2f}"))
         self._atualizar_combos_produtos()
 
-    # ---------- TELA: VENDAS ----------
+    #Vendas
     def _criar_frame_vendas(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -719,7 +722,7 @@ class App(ctk.CTk):
         if hasattr(self, "combo_produto_venda"):
             self.combo_produto_venda.configure(values=produtos)
 
-    # ---------- TELA: FORNECEDORES ----------
+    #Fornecedores
     def _criar_frame_fornecedores(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -782,7 +785,7 @@ class App(ctk.CTk):
         for id_f, nome, celular, produto in self.gestao.listar_fornecedores():
             self.tabela_fornecedores.insert("", "end", values=(id_f, nome, celular, produto))
 
-    # ---------- TELA: RELATORIO ----------
+    #Relatorio
     def _criar_frame_relatorio(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -815,7 +818,7 @@ class App(ctk.CTk):
             messagebox.showwarning("Estoque vazio", "Não há produtos em estoque para gerar o relatório.")
         self.atualizar_valor_total()
 
-    # ---------- NAVEGACAO ----------
+    #Navegacao
     def mostrar_estoque(self):
         self.atualizar_tabela_estoque()
         self.frame_estoque.tkraise()
@@ -834,7 +837,7 @@ class App(ctk.CTk):
         self.frame_relatorio.tkraise()
 
 
-# ------------------- INICIALIZACAO -------------------
+#Inicializacao
 def iniciar_app_principal(usuario_logado):
     gestao = Gestao("estoque.db")
     vendas = Vendas("estoque.db", gestao)
