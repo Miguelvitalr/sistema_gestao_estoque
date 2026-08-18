@@ -285,7 +285,7 @@ class Vendas:
         self.gestao = gestao #Instância da classe GestaoEstoque
         self.criar_tabela_vendas()
 
-    def criar_tabela_vendas(self):
+    def criar_tabela_vendas(self): 
         cursor = self.conn.cursor()
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS vendas (
@@ -299,7 +299,7 @@ class Vendas:
         ''')
         self.conn.commit()
 
-    def registrar_venda(self, produto, quantidade):
+    def registrar_venda(self, produto, quantidade): 
         preco = self.gestao.consultar_preco(produto)
         if preco is None:
             return False, "Produto nao encontrado no estoque."
@@ -358,7 +358,8 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 
-def estilizar_treeview():
+def estilizar_treeview(): #estiliza a Treeview do Tkinter para combinar com o tema escuro do CustomTkinter
+    # treeview é um widget do Tkinter que permite exibir dados em formato de tabela, com colunas e linhas, e permite selecionar uma ou mais linhas da tabela.
     estilo = ttk.Style()
     estilo.theme_use("default")
     estilo.configure("Treeview", background=COR_FUNDO, foreground=COR_TEXTO,
@@ -366,13 +367,13 @@ def estilizar_treeview():
                       font=("Segoe UI", 11))
     estilo.configure("Treeview.Heading", background=COR_AZUL_ESCURO, foreground=COR_TEXTO,
                       font=("Segoe UI", 11, "bold"), borderwidth=0)
-    estilo.map("Treeview", background=[("selected", COR_AZUL_PRIMARIO)])
+    estilo.map("Treeview", background=[("selected", COR_AZUL_PRIMARIO)]) # Estiliza a linha selecionada
 
 
 #Login e Cadastro de Usuario
-class TelaLogin(ctk.CTkToplevel if False else ctk.CTk):
+class TelaLogin(ctk.CTkToplevel if False else ctk.CTk): # Tela de login do sistema, que herda de ctk.CTkToplevel se for uma janela filha ou ctk.CTk se for a janela principal
     def __init__(self, usuarios: Usuarios, ao_logar):
-        super().__init__()
+        super().__init__() # Chama o construtor da classe pai (ctk.CTkToplevel ou ctk.CTk) para inicializar a janela
         self.usuarios = usuarios
         self.ao_logar = ao_logar
 
@@ -396,24 +397,25 @@ class TelaLogin(ctk.CTkToplevel if False else ctk.CTk):
         btn_entrar = ctk.CTkButton(card, text="Entrar", command=self.fazer_login,
                                     height=42, corner_radius=8, fg_color=COR_AZUL_PRIMARIO,
                                     hover_color=COR_AZUL_HOVER, font=ctk.CTkFont(size=14, weight="bold"))
+        # pack com pady e padx para adicionar espaçamento vertical e horizontal, respectivamente, e fill="x" para expandir o botão horizontalmente dentro do card.
         btn_entrar.pack(pady=(20, 10), padx=30, fill="x")
 
         btn_criar = ctk.CTkButton(card, text="Criar nova conta", command=self.abrir_cadastro,
                                    height=38, corner_radius=8, fg_color="transparent",
                                    hover_color=COR_BORDA, text_color=COR_AZUL_PRIMARIO,
                                    border_width=1, border_color=COR_AZUL_PRIMARIO)
-        btn_criar.pack(padx=30, fill="x")
+        btn_criar.pack(padx=30, fill="x") # pack com padx para adicionar espaçamento horizontal e fill="x" para expandir o botão horizontalmente dentro do card.
 
-        self.bind("<Return>", lambda e: self.fazer_login())
+        self.bind("<Return>", lambda e: self.fazer_login()) # Bind para permitir login com Enter
 
-    def _campo(self, master, label, mostrar=None):
-        ctk.CTkLabel(master, text=label, text_color=COR_TEXTO_SECUNDARIO,
+    def _campo(self, master, label, mostrar=None): #Cria um campo de entrada com label acima, usando ctk.CTkLabel e ctk.CTkEntry, e retorna o widget de entrada criado.
+        ctk.CTkLabel(master, text=label, text_color=COR_TEXTO_SECUNDARIO, # desenha ISSO:  "Usuário" (o texto)
                      font=ctk.CTkFont(size=12)).pack(anchor="w", padx=30, pady=(8, 2))
-        entry = ctk.CTkEntry(master, height=38, corner_radius=8, fg_color=COR_FUNDO,
+        entry = ctk.CTkEntry(master, height=38, corner_radius=8, fg_color=COR_FUNDO, # desenha ISSO:  [caixinha vazia]
                               border_color=COR_AZUL_PRIMARIO, text_color=COR_TEXTO,
                               show=mostrar)
-        entry.pack(padx=30, fill="x")
-        return entry
+        entry.pack(padx=30, fill="x") 
+        return entry # guarda a caixinha pra usar depois
 
     def fazer_login(self):
         username = self.entry_user.get().strip()
@@ -421,18 +423,18 @@ class TelaLogin(ctk.CTkToplevel if False else ctk.CTk):
         if not username or not senha:
             messagebox.showwarning("Campos obrigatórios", "Preencha usuário e senha.")
             return
-        usuario = self.usuarios.login(username, senha)
+        usuario = self.usuarios.login(username, senha) #Tenta fazer login com o nome de usuário e senha fornecidos. Se o login for bem-sucedido, fecha a janela de login e chama a função ao_logar com os dados do usuário. Se o login falhar, exibe uma mensagem de erro.
         if usuario:
             self.destroy()
             self.ao_logar(usuario)
         else:
             messagebox.showerror("Erro", "Usuário ou senha incorretos.")
 
-    def abrir_cadastro(self):
+    def abrir_cadastro(self): # Abre a janela de cadastro de usuário, passando a instância de Usuarios para que o novo usuário possa ser cadastrado no banco de dados. 
         JanelaCadastroUsuario(self, self.usuarios)
 
 
-class JanelaCadastroUsuario(ctk.CTkToplevel):
+class JanelaCadastroUsuario(ctk.CTkToplevel): # Janela de cadastro de usuário, que herda de ctk.CTkToplevel para ser uma janela filha da janela de login
     def __init__(self, master, usuarios: Usuarios):
         super().__init__(master)
         self.usuarios = usuarios
@@ -461,11 +463,11 @@ class JanelaCadastroUsuario(ctk.CTkToplevel):
         entry.pack(padx=30, fill="x")
         return entry
 
-    def cadastrar(self):
+    def cadastrar(self): # Tenta cadastrar um novo usuário com o nome de usuário, senha e e-mail fornecidos. Se algum campo estiver vazio, exibe uma mensagem de aviso. Se o cadastro for bem-sucedido, exibe uma mensagem de sucesso e fecha a janela de cadastro. Se o nome de usuário já existir, exibe uma mensagem de erro.
         username = self.entry_user.get().strip()
         senha = self.entry_senha.get().strip()
         email = self.entry_email.get().strip()
-        if not username or not senha or not email:
+        if not username or not senha or not email: 
             messagebox.showwarning("Campos obrigatórios", "Preencha todos os campos.")
             return
         if self.usuarios.cadastrar_usuario(username, senha, email):
@@ -476,7 +478,7 @@ class JanelaCadastroUsuario(ctk.CTkToplevel):
 
 
 #Principal
-class App(ctk.CTk):
+class App(ctk.CTk): # Tela principal do sistema, que herda de ctk.CTk para ser a janela principal do aplicativo
     def __init__(self, gestao: Gestao, vendas: Vendas, usuario_logado):
         super().__init__()
         self.gestao = gestao
@@ -488,16 +490,17 @@ class App(ctk.CTk):
         self.configure(fg_color=COR_FUNDO)
         self.minsize(950, 600)
 
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1) #configura a coluna 1 (a área principal) para expandir e ocupar o espaço disponível na janela, enquanto a coluna 0 (a barra lateral) permanece fixa. O weight=1 indica que a coluna 1 deve ter prioridade para expandir.
+        self.grid_rowconfigure(0, weight=1) #configura a linha 0 (a única linha da janela) para expandir e ocupar o espaço disponível na janela. O weight=1 indica que a linha 0 deve ter prioridade para expandir.
 
-        estilizar_treeview()
+        estilizar_treeview() # Estiliza o treeview
+        #treeview é um widget do Tkinter que permite exibir dados em formato de tabela, com colunas e linhas, e permite selecionar uma ou mais linhas da tabela.
 
         self._criar_sidebar()
-        self._criar_area_principal()
+        self._criar_area_principal() 
 
-        self.frame_estoque.tkraise()
-        self.atualizar_tabela_estoque()
+        self.frame_estoque.tkraise() #Levanta o frame de estoque para que ele seja exibido na área principal da janela, sobrepondo os outros frames (vendas, fornecedores e relatório). Isso garante que o usuário veja a tela de estoque ao iniciar o aplicativo.
+        self.atualizar_tabela_estoque() #Atualiza a tabela de estoque para exibir os produtos cadastrados no banco de dados, garantindo que o usuário veja as informações mais recentes ao iniciar o aplicativo.
 
     #Barra lateral
     def _criar_sidebar(self):
@@ -516,8 +519,8 @@ class App(ctk.CTk):
             ("🚚  Fornecedores", self.mostrar_fornecedores),
             ("📊  Relatório", self.mostrar_relatorio),
         ]
-        for texto, comando in botoes:
-            ctk.CTkButton(sidebar, text=texto, command=comando, anchor="w", height=42,
+        for texto, comando in botoes: #Cria os botões da barra lateral, cada botão é um ctk.CTkButton com o texto e comando correspondentes, e é empacotado na barra lateral com espaçamento vertical (pady) e horizontal (padx), preenchendo horizontalmente (fill="x") para ocupar toda a largura da barra lateral.
+            ctk.CTkButton(sidebar, text=texto, command=comando, anchor="w", height=42, 
                           corner_radius=8, fg_color="transparent", hover_color=COR_AZUL_ESCURO,
                           text_color=COR_TEXTO, font=ctk.CTkFont(size=14)).pack(pady=4, padx=15, fill="x")
 
@@ -528,7 +531,7 @@ class App(ctk.CTk):
     def _criar_area_principal(self):
         container = ctk.CTkFrame(self, fg_color=COR_FUNDO)
         container.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
-        container.grid_rowconfigure(0, weight=1)
+        container.grid_rowconfigure(0, weight=1) #configura a linha 0 (a única linha do container) para expandir e ocupar o espaço disponível na área principal da janela. O weight=1 indica que a linha 0 deve ter prioridade para expandir.
         container.grid_columnconfigure(0, weight=1)
 
         self.frame_estoque = self._criar_frame_estoque(container)
@@ -539,7 +542,7 @@ class App(ctk.CTk):
         for frame in (self.frame_estoque, self.frame_vendas, self.frame_fornecedores, self.frame_relatorio):
             frame.grid(row=0, column=0, sticky="nswe")
 
-    def _card_header(self, frame, titulo):
+    def _card_header(self, frame, titulo): #Cria o cabeçalho de cada card (frame) da área principal, com um título em negrito e cor de texto definida. O cabeçalho é um ctk.CTkFrame empacotado no frame pai, preenchendo horizontalmente (fill="x") e com espaçamento vertical (pady) e horizontal (padx). O título é um ctk.CTkLabel empacotado no cabeçalho, alinhado à esquerda (side="left").
         header = ctk.CTkFrame(frame, fg_color="transparent")
         header.pack(fill="x", padx=25, pady=(20, 10))
         ctk.CTkLabel(header, text=titulo, font=ctk.CTkFont(size=20, weight="bold"),
@@ -581,7 +584,7 @@ class App(ctk.CTk):
 
         return frame
 
-    def _campo_grid(self, master, label, row, col):
+    def _campo_grid(self, master, label, row, col): # Cria um campo de entrada com label acima, usando ctk.CTkLabel e ctk.CTkEntry, e retorna o widget de entrada criado. O campo é colocado em uma grade (grid) no frame pai, na linha (row) e coluna (col) especificadas. O campo é empacotado dentro de um ctk.CTkFrame transparente para permitir espaçamento e alinhamento adequado.
         wrap = ctk.CTkFrame(master, fg_color="transparent")
         wrap.grid(row=row, column=col, sticky="we", padx=6)
         ctk.CTkLabel(wrap, text=label, text_color=COR_TEXTO_SECUNDARIO,
@@ -612,7 +615,7 @@ class App(ctk.CTk):
         verificar_e_alertar(self.gestao, produto, self.usuario["email"])
 
         for e in (self.entry_produto, self.entry_qtd, self.entry_preco):
-            e.delete(0, "end")
+            e.delete(0, "end") #Limpa os campos de entrada após adicionar o produto
         self.atualizar_tabela_estoque()
 
     def remover_produto_selecionado(self):
@@ -621,7 +624,7 @@ class App(ctk.CTk):
             messagebox.showwarning("Nada selecionado", "Selecione um produto na tabela.")
             return
         valores = self.tabela_estoque.item(sel[0], "values")
-        produto = valores[1]
+        produto = valores[1] #Pega o nome do produto da linha selecionada na tabela de estoque
         if messagebox.askyesno("Confirmar", f"Remover '{produto}' do estoque?"):
             self.gestao.remover_produto(produto)
             self.atualizar_tabela_estoque()
@@ -634,7 +637,7 @@ class App(ctk.CTk):
         self._atualizar_combos_produtos()
 
     #Vendas
-    def _criar_frame_vendas(self, master):
+    def _criar_frame_vendas(self, master): #Cria o frame de vendas, que contém os campos de entrada para registrar uma venda, os botões para registrar, remover e atualizar vendas, e a tabela que exibe as vendas registradas. O frame é empacotado no frame pai (master) e configurado com cores e bordas.
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
         self._card_header(frame, "Vendas")
@@ -717,12 +720,13 @@ class App(ctk.CTk):
             self.tabela_vendas.insert("", "end", values=(id_v, produto, qtd, f"R$ {preco_unit:.2f}",
                                                           f"R$ {total:.2f}", data))
 
-    def _atualizar_combos_produtos(self):
+    def _atualizar_combos_produtos(self): #Atualiza os valores do combo box de produtos na tela de vendas, obtendo a lista de produtos disponíveis no estoque através da função lista_estoque() da classe GestaoEstoque. Se o combo_produto_venda existir, ele é configurado com os novos valores de produtos.
         produtos = [p[0] for p in self.gestao.lista_estoque()]
         if hasattr(self, "combo_produto_venda"):
             self.combo_produto_venda.configure(values=produtos)
 
     #Fornecedores
+    # funciona de forma semelhante à tela de estoque, mas com campos específicos para cadastrar fornecedores (nome, celular e produto fornecido) e uma tabela que exibe os fornecedores cadastrados. Os botões permitem cadastrar um novo fornecedor, remover o fornecedor selecionado e atualizar a lista de fornecedores.
     def _criar_frame_fornecedores(self, master):
         frame = ctk.CTkFrame(master, fg_color=COR_CARD, corner_radius=12,
                               border_width=1, border_color=COR_BORDA)
@@ -810,7 +814,7 @@ class App(ctk.CTk):
         total = self.gestao.valor_total_estoque()
         self.label_valor_total.configure(text=f"Valor total do estoque: R$ {total:.2f}")
 
-    def gerar_relatorio(self):
+    def gerar_relatorio(self): #Gera um relatório em Excel com gráfico do estoque atual, chamando a função gerar_grafico_estoque da classe GestaoEstoque. Se o relatório for gerado com sucesso, exibe uma mensagem informando que o arquivo foi criado. Se não houver produtos em estoque, exibe uma mensagem de aviso. Após gerar o relatório, atualiza o valor total do estoque na tela de relatório.
         sucesso = self.gestao.gerar_grafico_estoque("relatorio_estoque.xlsx")
         if sucesso:
             messagebox.showinfo("Relatório gerado", "Arquivo 'relatorio_estoque.xlsx' criado com sucesso.")
